@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def gradient_descent(X, y, theta, learning_rate, num_iterations):
+    m = len(y)
+    cost_history = []
+    for i in range(num_iterations):
+        h = np.dot(X, theta)
+        error = h - y
+        gradient = np.dot(X.T, error) / m
+        theta = theta - learning_rate * gradient
+        
+        cost = np.sum(error ** 2) / (2 * m)
+        cost_history.append(cost)
+    return theta, cost_history
+
+def plot_linear_model(X, y, theta, title, xlabel, ylabel, cost_history):
+    plt.scatter(X, y, color='red')
+    plt.plot(X, np.dot(X, theta), color='blue')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+    
+    plt.plot(range(1, len(cost_history) + 1), cost_history)
+    plt.xlabel('Iteration')
+    plt.ylabel('Cost')
+    plt.show()
+
+theta = np.zeros((1, 1))
+learning_rate = 0.1 # choose a value between 0.1 and 0.01
+num_iterations = 100
+
+cost_histories = []
+for i in range(3):
+    X_temp = X[:, i].reshape(-1, 1)
+    theta, cost_history = gradient_descent(X_temp, y, theta, learning_rate, num_iterations)
+    plot_linear_model(X_temp, y, theta, f"Linear Model for X{i+1}", f"X{i+1}", "Y", cost_history)
+    cost_histories.append(cost_history)
+    print(f"Theta for X{i+1}: \n{theta} \n")
+
+min_cost_index = cost_histories.index(min(cost_histories))
+
+print(f"The explanatory variable with the lowest loss is X{min_cost_index + 1}")
