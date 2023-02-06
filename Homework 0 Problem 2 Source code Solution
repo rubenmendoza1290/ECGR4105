@@ -1,0 +1,42 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def gradient_descent(X, y, theta, learning_rate, num_iterations):
+    m = len(y)
+    loss = []
+    for i in range(num_iterations):
+        h = np.dot(X, theta)
+        error = h - y
+        gradient = np.dot(X.T, error) / m
+        theta = theta - learning_rate * gradient
+        cost = np.sum(error ** 2) / (2 * m)
+        loss.append(cost)
+    return theta, loss
+
+def plot_loss(loss, title, xlabel, ylabel):
+    plt.plot(range(1, len(loss)+1), loss)
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
+
+data = pd.read_csv("D3.csv")
+X = data.iloc[:, :3].values
+y = data.iloc[:, 3].values.reshape(-1, 1)
+
+X = np.append(np.ones((X.shape[0], 1)), X, axis=1)
+
+theta = np.zeros((X.shape[1], 1))
+
+learning_rate = 0.05
+num_iterations = 1000
+
+theta, loss = gradient_descent(X, y, theta, learning_rate, num_iterations)
+
+plot_loss(loss, "Loss over iteration", "Iteration", "Loss")
+
+new_values = np.array([[1, 1, 1], [2, 0, 4], [3, 2, 1]])
+new_values = np.append(np.ones((new_values.shape[0], 1)), new_values, axis=1)
+predictions = np.dot(new_values, theta)
+print("Predictions for new values: \n", predictions)
