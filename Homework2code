@@ -1,0 +1,241 @@
+# Problem 1
+from google.colab import drive
+drive.mount('/content/gdrive')
+cd /content/gdrive/MyDrive/ECGR\ 4105/homework
+!pip install -U scikit-learn
+import numpy as np 
+import pandas as pd
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
+import matplotlib.pyplot as plt
+
+# Load diabetes dataset
+diabetes = pd.read_csv('diabetes.csv')
+# Split the dataset into features (X) and labels (y)
+X1 = diabetes.iloc[:, :-1].values
+y1 = diabetes.iloc[:, -1].values
+
+# Split the data into training and testing sets (80/20 split)
+X_train1, X_test1, y_train1, y_test1 = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+#Problem1
+# Scale and standardize the features
+scaler = StandardScaler()
+X_train1 = scaler.fit_transform(X_train1)
+X_test1 = scaler.transform(X_test1)
+
+# Train a logistic regression model
+model = LogisticRegression(random_state=42)
+model.fit(X_train1, y_train1)
+
+# Evaluate the model on the testing set
+y_pred1 = model.predict(X_test1)
+
+#Calculate evaluation metrics
+accuracy1 = accuracy_score(y_test1, y_pred1)
+precision1 = precision_score(y_test1, y_pred1)
+recall1 = recall_score(y_test1, y_pred1)
+conf_matrix1 = confusion_matrix(y_test1, y_pred1)
+# Print the evaluation metrics
+print("Accuracy: ", accuracy1)
+print("Precision: ", precision1)
+print("Recall: ", recall1)
+print("Confusion Matrix:\n", conf_matrix1)
+
+# Plot the confusion matrix
+plt.imshow(conf_matrix1, cmap = 'Blues')
+plt.colorbar()
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.xticks([0, 1], ["Negative", "Positive"])
+plt.yticks([0, 1], ["Negative", "Positive"])
+for i in range(2):
+  for j in range(2):
+    plt.text(j, i, str(conf_matrix1[i][j]), ha='center', va = 'center', color= 'white')
+plt.show()
+
+
+
+# Problem 2
+# Split data into features (X) and labels (y)
+X = diabetes.iloc[:, :-1]
+y = diabetes.iloc[:, -1]
+
+# Scale and standardize features
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+# Initialize KFold cross-validator with K=5 and K=10
+kf5 = KFold(n_splits=5, shuffle=True, random_state=42)
+kf10 = KFold(n_splits=10, shuffle=True, random_state=42)
+
+# Define evaluation metrics
+def evaluate(y_true, y_pred):
+    acc = accuracy_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred)
+    rec = recall_score(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred)
+    return acc, prec, rec, cm
+
+# Perform K-fold cross-validation for K=5 and K=10
+acc_5 = []
+prec_5 = []
+rec_5 = []
+cm_5 = []
+for train_index, test_index in kf5.split(X):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+    lr = LogisticRegression()
+    lr.fit(X_train, y_train)
+    y_pred = lr.predict(X_test)
+    acc, prec, rec, cm = evaluate(y_test, y_pred)
+    acc_5.append(acc)
+    prec_5.append(prec)
+    rec_5.append(rec)
+    cm_5.append(cm)
+
+acc_10 = []
+prec_10 = []
+rec_10 = []
+cm_10 = []
+for train_index, test_index in kf10.split(X):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+    lr = LogisticRegression()
+    lr.fit(X_train, y_train)
+    y_pred = lr.predict(X_test)
+    acc, prec, rec, cm = evaluate(y_test, y_pred)
+    acc_10.append(acc)
+    prec_10.append(prec)
+    rec_10.append(rec)
+    cm_10.append(cm)
+
+# Print average evaluation metrics for K=5 and K=10
+print("K=5")
+print("Accuracy:", np.mean(acc_5))
+print("Precision:", np.mean(prec_5))
+print("Recall:", np.mean(rec_5))
+print("Confusion Matrix:\n", np.mean(cm_5, axis=0))
+
+print("K=10")
+print("Accuracy:", np.mean(acc_10))
+print("Precision:", np.mean(prec_10))
+print("Recall:", np.mean(rec_10))
+print("Confusion Matrix:\n", np.mean(cm_10, axis=0))
+
+
+
+# Problem 3
+from sklearn.datasets import load_breast_cancer
+data = load_breast_cancer()
+X = data.data
+print(X.shape)
+Y = data.target
+breast_input = pd.DataFrame(X)
+breast_input.head()
+# Split the data into training and testing sets
+X_train3, X_test3, y_train3, y_test3 = train_test_split(data.data, data.target, test_size=0.2, random_state=42)
+
+# Standardize the data
+scaler = StandardScaler()
+X_train3 = scaler.fit_transform(X_train3)
+X_test3 = scaler.transform(X_test3)
+
+# Fit the logistic regression model without weight penalty
+lr3 = LogisticRegression(random_state=42)
+lr3.fit(X_train3, y_train3)
+
+# Predict the labels for the testing set
+y_pred3 = lr3.predict(X_test3)
+
+# Evaluate the performance of the model
+print("Logistic Regression without weight penalty:\n")
+print("Accuracy:", accuracy_score(y_test3, y_pred3))
+print("Precision:", precision_score(y_test3, y_pred3))
+print("Recall:", recall_score(y_test3, y_pred3))
+print("Confusion Matrix:\n", confusion_matrix(y_test3, y_pred3))
+
+# Fit the logistic regression model with weight penalty
+lr_penalty = LogisticRegression(random_state=42, penalty='l2', solver='liblinear', C=0.1)
+lr_penalty.fit(X_train3, y_train3)
+
+# Predict the labels for the testing set
+y_pred_penalty = lr_penalty.predict(X_test3)
+
+# predict on the test data
+y_pred3_1 = lr3.predict(X_test3)
+
+# compute confusion matrix
+cm = confusion_matrix(y_test3, y_pred3_1)
+
+# Plot the confusion matrix
+plt.imshow(cm, cmap = 'Blues')
+plt.colorbar()
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.xticks([0, 1], ["Negative", "Positive"])
+plt.yticks([0, 1], ["Negative", "Positive"])
+for i in range(2):
+  for j in range(2):
+    plt.text(j, i, str(cm[i][j]), ha='center', va = 'center', color= 'white')
+plt.show()
+
+# Evaluate the performance of the model with weight penalty
+print("\nLogistic Regression with weight penalty:")
+print("Accuracy:", accuracy_score(y_test3, y_pred_penalty))
+print("Precision:", precision_score(y_test3, y_pred_penalty))
+print("Recall:", recall_score(y_test3, y_pred_penalty))
+print("Confusion Matrix:\n", confusion_matrix(y_test3, y_pred_penalty))
+
+
+
+# Problem 4
+#4.1
+# Standardize the data
+scaler = StandardScaler()
+X4 = scaler.fit_transform(data.data)
+
+# Split the data into training and testing sets
+X_train4, X_test4, y_train4, y_test4 = train_test_split(X4, data.target, test_size=0.2, random_state=42)
+
+# Fit the logistic regression model without weight penalty using K-fold cross-validation with K=5
+lr4 = LogisticRegression(random_state=42)
+lr4.fit(X_train4, y_train4)
+scores = cross_val_score(lr4, X_train4, y_train4, cv=5)
+y_pred4 = lr4.predict(X_test4)
+print("Logistic Regression without weight penalty:\n")
+print("Accuracy:", scores.mean())
+print("Precision:", precision_score(y_test4, y_pred4))
+print("Recall:", recall_score(y_test4, y_pred4))
+print("Confusion Matrix:\n", confusion_matrix(y_test4, y_pred4))
+
+# Fit the logistic regression model without weight penalty using K-fold cross-validation with K=10
+scores = cross_val_score(lr4, X_train4, y_train4, cv=10)
+print("Logistic Regression without weight penalty:\n")
+print("Accuracy:", scores.mean())
+print("Precision:", precision_score(y_test4, y_pred4))
+print("Recall:", recall_score(y_test4, y_pred4))
+print("Confusion Matrix:\n", confusion_matrix(y_test4, y_pred4))
+
+# 4.2
+# Fit the logistic regression model with weight penalty using K-fold cross-validation with K=5
+lr_penalty4 = LogisticRegression(random_state=42, penalty='l2', solver='liblinear', C=0.1)
+lr_penalty4.fit(X_train4, y_train4)
+scores = cross_val_score(lr_penalty4, X_train4, y_train4, cv=5)
+print("\nLogistic Regression with weight penalty:")
+print("Accuracy:", scores.mean())
+print("Precision:", precision_score(y_test4, lr_penalty4.predict(X_test4)))
+print("Recall:", recall_score(y_test4, lr_penalty4.predict(X_test4)))
+print("Confusion Matrix:\n", confusion_matrix(y_test4, lr_penalty4.predict(X_test4)))
+
+# Fit the logistic regression model with weight penalty using K-fold cross-validation with K=10
+lr_penalty4 = LogisticRegression(random_state=42, penalty='l2', solver='liblinear', C=0.1)
+lr_penalty4.fit(X_train4, y_train4)
+scores = cross_val_score(lr_penalty4, X_train4, y_train4, cv=10)
+print("\nLogistic Regression with weight penalty:")
+print("Accuracy:", scores.mean())
+print("Precision:", precision_score(y_test4, lr_penalty4.predict(X_test4)))
+print("Recall:", recall_score(y_test4, lr_penalty4.predict(X_test4)))
+print("Confusion Matrix:\n", confusion_matrix(y_test4, lr_penalty4.predict(X_test4)))
