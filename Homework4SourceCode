@@ -1,0 +1,209 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+# Load breast cancer dataset
+breast = load_breast_cancer()
+breast_data = breast.data
+breast_labels = breast.target
+
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(breast_data, breast_labels, test_size=0.2, random_state=42)
+
+# Perform PCA on training data
+pca = PCA()
+X_train_pca = pca.fit_transform(X_train)
+
+# Define number of principal components to try
+Ks = range(1, 11)
+
+# Train SVM with different kernels and record results
+results = {'linear': [], 'poly': [], 'rbf': [], 'sigmoid': []}
+for K in Ks:
+    for kernel in ['linear', 'poly', 'rbf', 'sigmoid']:
+        svm = SVC(kernel=kernel)
+        svm.fit(X_train_pca[:, :K], y_train)
+        y_pred = svm.predict(pca.transform(X_test)[:, :K])
+        acc = accuracy_score(y_test, y_pred)
+        prec = precision_score(y_test, y_pred)
+        rec = recall_score(y_test, y_pred)
+        results[kernel].append((K, acc, prec, rec))
+
+# Plot results
+plt.figure(figsize=(15, 5))
+for i, metric in enumerate(['accuracy', 'precision', 'recall']):
+    plt.subplot(1, 3, i+1)
+    plt.title(metric.capitalize())
+    plt.xlabel('Number of Principal Components (K)')
+    plt.ylabel(metric.capitalize())
+    for kernel, vals in results.items():
+        vals = np.array(vals)
+        plt.plot(vals[:, 0], vals[:, i+1], label=kernel)
+    plt.legend()
+    
+from sklearn.metrics import accuracy_score
+
+# Load breast cancer dataset
+breast = load_breast_cancer()
+breast_data = breast.data
+breast_labels = breast.target
+
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(breast_data, breast_labels, test_size=0.2, random_state=42)
+
+# Perform PCA on training data
+pca = PCA()
+X_train_pca = pca.fit_transform(X_train)
+
+# Define number of principal components to try
+Ks = range(1, 12)
+
+# Define list of kernels to try
+kernels = ['linear', 'poly', 'rbf', 'sigmoid']
+
+# Train SVM with different kernels and record results
+results = {kernel: [] for kernel in kernels}
+for K in Ks:
+    for kernel in kernels:
+        svm = SVC(kernel=kernel)
+        svm.fit(X_train_pca[:, :K], y_train)
+        y_pred = svm.predict(pca.transform(X_test)[:, :K])
+        acc = accuracy_score(y_test, y_pred)
+        results[kernel].append((K, acc))
+
+# Plot results
+plt.figure(figsize=(15, 5))
+for i, kernel in enumerate(kernels):
+    plt.subplot(1, len(kernels), i+1)
+    plt.title(kernel.capitalize() + ' Kernel')
+    plt.xlabel('Number of Principal Components (K)')
+    plt.ylabel('Accuracy')
+    vals = np.array(results[kernel])
+    plt.plot(vals[:, 0], vals[:, 1], label=kernel)
+    plt.legend()
+ 
+# Problem 2
+
+from google.colab import drive
+drive.mount('/content/gdrive')
+cd /content/gdrive/MyDrive/ECGR\ 4105/homework
+ls
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+dataset = pd.read_csv('Housing.csv')
+dataset.head()
+from sklearn.svm import SVR
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split
+
+# Load the dataset
+dataset = pd.read_csv('Housing.csv')
+
+# Define the input variables and the target variable
+X = dataset[['area', 'bedrooms', 'bathrooms', 'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'parking', 'prefarea']]
+y = dataset['price']
+
+# Define a column transformer that applies one-hot encoding to the categorical variables
+categorical_features = ['mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'prefarea']
+preprocessor = ColumnTransformer(transformers=[('cat', OneHotEncoder(drop='first'), categorical_features)], remainder='passthrough')
+
+# Split the data into training and test sets with an 80/20 split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# Create a pipeline that applies the column transformer, scales the data and applies PCA
+pca_pipeline = make_pipeline(preprocessor, StandardScaler(), PCA())
+
+# Fit the pipeline to the training data and transform the training and test data
+X_train_pca = pca_pipeline.fit_transform(X_train)
+X_test_pca = pca_pipeline.transform(X_test)
+
+# Create a list to store the regression accuracy for different numbers of principal components
+regression_accuracy = []
+
+# Loop over different numbers of principal components
+for n_components in range(1, X_train_pca.shape[1] + 1):
+    # Fit a SVR model to the training data using the first n_components principal components
+    svr = SVR(kernel='rbf', C=1e3, gamma=0.1)
+    svr.fit(X_train_pca[:, :n_components], y_train)
+    
+    # Compute the regression accuracy on the test data
+    score = svr.score(X_test_pca[:, :n_components], y_test)
+    regression_accuracy.append(score)
+
+# Find the number of principal components that achieves the highest regression accuracy
+optimal_n_components = np.argmax(regression_accuracy) + 1
+
+# Print the result
+print(f'The optimal number of principal components is {optimal_n_components}.')
+
+# Create a figure and axes
+fig, ax = plt.subplots()
+
+# Plot the true target values
+ax.scatter(X_test_pca[:, 0], y_test, color='darkorange', label='data')
+
+# Plot the predicted target values using the SVR model with a RBF kernel
+y_rbf = svr_rbf.predict(X_test_pca)
+ax.plot(X_test_pca[:, 0], y_rbf, color='navy', lw=2, label='RBF model')
+
+# Plot the predicted target values using the SVR model with a linear kernel
+y_lin = svr_lin.predict(X_test_pca)
+ax.plot(X_test_pca[:, 0], y_lin, color='c', lw=2, label='Linear model')
+
+# Plot the predicted target values using the SVR model with a polynomial kernel
+y_poly = svr_poly.predict(X_test_pca)
+ax.plot(X_test_pca[:, 0], y_poly, color='cornflowerblue', lw=2, label='Polynomial model')
+
+# Set the axis labels and title
+ax.set_xlabel('First principal component')
+ax.set_ylabel('Price')
+ax.set_title('Support Vector Regression')
+
+# Add a legend
+ax.legend()
+
+# Show the plot
+plt.show()
+
+# Define a list of kernel tricks to explore
+kernels = ['linear', 'poly', 'rbf', 'sigmoid']
+
+# Create a dictionary to store the regression accuracy for each kernel trick
+regression_accuracy = {}
+
+# Loop over the kernel tricks
+for kernel in kernels:
+    # Fit a SVR model with the current kernel trick to the training data
+    svr = SVR(kernel=kernel, C=1e3, gamma='auto')
+    svr.fit(X_train_pca, y_train)
+    
+    # Compute the regression accuracy on the test data
+    score = svr.score(X_test_pca, y_test)
+    regression_accuracy[kernel] = score
+
+# Print the regression accuracy for each kernel trick
+for kernel, score in regression_accuracy.items():
+    print(f'{kernel} kernel: {score:.2f}')
+
+# Create a figure and axes
+fig, ax = plt.subplots()
+
+# Plot the regression accuracy for each kernel trick
+ax.bar(regression_accuracy.keys(), regression_accuracy.values())
+
+# Set the axis labels and title
+ax.set_xlabel('Kernel trick')
+ax.set_ylabel('Regression accuracy')
+ax.set_title('SVR with different kernels')
+
+# Show the plot
+plt.show()
